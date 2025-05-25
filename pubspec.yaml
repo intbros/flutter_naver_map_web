@@ -1,0 +1,38 @@
+name: flutter_naver_map_web
+description: A Flutter web plugin for integrating Naver Maps API. Provides widgets and utilities to display interactive Naver Maps with markers, info windows, and various controls in Flutter web applications.
+homepage: https://github.com/intbros/flutter_naver_map_web
+repository: https://github.com/intbros/flutter_naver_map_web
+issue_tracker: https://github.com/intbros/flutter_naver_map_web/issues
+documentation: https://github.com/intbros/flutter_naver_map_web/blob/main/README.md
+
+version: 0.0.1
+
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+  flutter: ">=3.32.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_web_plugins:
+    sdk: flutter
+  web: ^1.1.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  plugin:
+    platforms:
+      web:
+        pluginClass: NaverMapPlugin
+        fileName: flutter_naver_map_web.dart
+
+topics:
+  - maps
+  - naver
+  - web
+  - geolocation
+  - flutter-web
