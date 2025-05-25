@@ -1,0 +1,33 @@
+# Backup files
+*.bak
+*_backup/
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+
+# FVM related
+.fvm/
+.fvmrc
+
+# Development files
+.metadata
+
+# Platform specific folders (not needed for web-only package)
+android/
+ios/
+linux_backup/
+macos_backup/
+windows_backup/
+web_backup/
+
+# Build artifacts
+build/
+.dart_tool/
+
+# Test coverage
+coverage/
+
+# Documentation generation
+doc/api/

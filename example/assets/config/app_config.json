@@ -1,0 +1,10 @@
+{
+  "naver_map": {
+    "client_id": "YOUR_NAVER_MAP_CLIENT_ID_HERE",
+    "description": "네이버 맵 API 클라이언트 ID를 여기에 입력하세요"
+  },
+  "app": {
+    "name": "Flutter Naver Map Web Example",
+    "version": "1.0.0"
+  }
+}
