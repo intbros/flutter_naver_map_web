@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
+
 import 'config/app_config.dart';
 import 'examples/basic_map_example.dart';
+import 'examples/marker_click_example.dart';
 import 'examples/multiple_markers_example.dart';
 import 'examples/various_sizes_example.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // AppConfig 초기화
   await AppConfig.instance.initialize(environment: Environment.current);
-  
+
   // 디버그 정보 출력
   AppConfig.instance.printDebugInfo();
-  
+
   runApp(const MainApp());
 }
 
@@ -96,7 +98,21 @@ class ExampleSelectionPage extends StatelessWidget {
                   const SizedBox(height: 16),
                   _buildExampleCard(
                     context,
-                    title: '3. 다양한 크기의 지도 위젯',
+                    title: '3. 마커 클릭 이벤트',
+                    description: '마커를 클릭했을 때 정보창을 표시하고 이벤트를 처리하는 방법을 보여줍니다.',
+                    icon: Icons.touch_app,
+                    color: Colors.orange,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const MarkerClickExample(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildExampleCard(
+                    context,
+                    title: '4. 다양한 크기의 지도 위젯',
                     description: '다양한 크기와 레이아웃으로 지도 위젯을 배치하는 방법을 보여줍니다.',
                     icon: Icons.view_quilt,
                     color: Colors.purple,

@@ -153,6 +153,9 @@ extension MarkerExtension on Marker {
 
   @JS('getVisible')
   external bool getVisible();
+  
+  /// JSAny로 캐스팅하기 위한 헬퍼 메서드
+  JSAny get asJSAny => this as JSAny;
 }
 
 /// InfoWindow 클래스 인터페이스
