@@ -76,6 +76,12 @@ class _NaverMapWebState extends State<NaverMapWeb> {
   /// 정보창 맵 (장소 ID -> 정보창)
   final Map<String, InfoWindow> _infoWindows = {};
   
+  /// Place 맵 (장소 ID -> Place)
+  final Map<String, Place> _places = {};
+  
+  /// 마커 이벤트 리스너 맵 (장소 ID -> 리스너)
+  final Map<String, JSFunction> _markerEventListeners = {};
+  
   /// DOM 요소
   web.HTMLElement? _mapElement;
   
@@ -138,6 +144,8 @@ class _NaverMapWebState extends State<NaverMapWeb> {
 
   @override
   void dispose() {
+    // 모든 이벤트 리스너 제거
+    _clearAllEventListeners();
     // 모든 마커 제거
     _clearAllMarkers();
     // 모든 정보창 제거
@@ -328,6 +336,8 @@ class _NaverMapWebState extends State<NaverMapWeb> {
     
     // 새로운 마커 추가 또는 업데이트
     for (final place in widget.places) {
+      _places[place.id] = place; // Place 맵에 추가
+      
       if (_markers.containsKey(place.id)) {
         // 기존 마커 업데이트
         _updateMarker(place);
@@ -365,14 +375,63 @@ class _NaverMapWebState extends State<NaverMapWeb> {
         _addInfoWindow(place);
       }
       
-      // 클릭 이벤트 추가 (추후 구현)
-      if (widget.onMarkerClick != null) {
-        debugPrint('마커 클릭 이벤트 설정 예정: ${place.name}');
-      }
+      // 마커 클릭 이벤트 추가
+      _addMarkerClickEvent(place.id, marker);
       
       debugPrint('마커 추가 완료: ${place.name}');
     } catch (e) {
       debugPrint('Error adding marker: $e');
+    }
+  }
+
+  /// 마커 클릭 이벤트 추가
+  void _addMarkerClickEvent(String placeId, Marker marker) {
+    try {
+      // JavaScript에서 호출할 수 있는 콜백 함수 생성
+      final clickListener = ((JSAny event) {
+        debugPrint('마커 클릭됨: $placeId');
+        
+        // 해당하는 Place 객체 찾기
+        final place = _places[placeId];
+        if (place != null && widget.onMarkerClick != null) {
+          widget.onMarkerClick!(place);
+        }
+        
+        // 정보창 열기
+        final infoWindow = _infoWindows[placeId];
+        if (infoWindow != null && _naverMap != null) {
+          infoWindow.open(_naverMap!, marker.asJSAny);
+        }
+      }).toJS;
+      
+      // 네이버 지도 API의 이벤트 리스너 추가
+      _addEventListenerToMarker(marker, 'click', clickListener);
+      
+      // 리스너 저장 (나중에 해제하기 위해)
+      _markerEventListeners[placeId] = clickListener;
+      
+      debugPrint('마커 클릭 이벤트 등록 완료: $placeId');
+    } catch (e) {
+      debugPrint('Error adding marker click event: $e');
+    }
+  }
+
+  /// 마커에 이벤트 리스너 추가 (JavaScript 네이티브 함수 사용)
+  void _addEventListenerToMarker(Marker marker, String eventType, JSFunction listener) {
+    try {
+      // naver.maps.Event.addListener를 직접 호출
+      final globalThis = globalContext;
+      final naver = globalThis['naver'] as JSObject;
+      final maps = naver['maps'] as JSObject;
+      final event = maps['Event'] as JSObject;
+      final addListener = event['addListener'] as JSFunction;
+      
+      // addListener(marker, eventType, listener) 호출
+      addListener.callAsFunction(null, marker.asJSAny, eventType.toJS, listener);
+      
+      debugPrint('이벤트 리스너 추가 완료: $eventType');
+    } catch (e) {
+      debugPrint('Error adding event listener to marker: $e');
     }
   }
 
@@ -386,8 +445,8 @@ class _NaverMapWebState extends State<NaverMapWeb> {
       marker.setPosition(LatLng(place.latitude, place.longitude) as JSAny);
       
       // 선택 상태에 따른 아이콘 크기 변경
-     // final isSelected = place.id == widget.selectedPlaceId;
-     // final size = isSelected ? defaultSelectedMarkerSize : defaultMarkerSize;
+      // final isSelected = place.id == widget.selectedPlaceId;
+      // final size = isSelected ? defaultSelectedMarkerSize : defaultMarkerSize;
       
       if (place.iconUrl != null) {
         // 아이콘 설정 기능은 추후 구현
@@ -401,14 +460,46 @@ class _NaverMapWebState extends State<NaverMapWeb> {
 
   /// 마커 제거
   void _removeMarker(String placeId) {
+    // 이벤트 리스너 제거
+    _removeMarkerEventListener(placeId);
+    
+    // 마커 제거
     final marker = _markers[placeId];
     if (marker != null) {
       marker.setMap(null);
       _markers.remove(placeId);
     }
     
+    // Place 제거
+    _places.remove(placeId);
+    
     // 정보창도 제거
     _removeInfoWindow(placeId);
+  }
+
+  /// 마커 이벤트 리스너 제거
+  void _removeMarkerEventListener(String placeId) {
+    final listener = _markerEventListeners[placeId];
+    final marker = _markers[placeId];
+    
+    if (listener != null && marker != null) {
+      try {
+        // naver.maps.Event.removeListener를 직접 호출
+        final globalThis = globalContext;
+        final naver = globalThis['naver'] as JSObject;
+        final maps = naver['maps'] as JSObject;
+        final event = maps['Event'] as JSObject;
+        final removeListener = event['removeListener'] as JSFunction;
+        
+        // removeListener(marker, eventType, listener) 호출
+        removeListener.callAsFunction(null, marker.asJSAny, 'click'.toJS, listener);
+        
+        _markerEventListeners.remove(placeId);
+        debugPrint('마커 이벤트 리스너 제거 완료: $placeId');
+      } catch (e) {
+        debugPrint('Error removing marker event listener: $e');
+      }
+    }
   }
 
   /// 정보창 추가
@@ -437,13 +528,7 @@ class _NaverMapWebState extends State<NaverMapWeb> {
       final infoWindow = InfoWindow(infoWindowOptions);
       _infoWindows[place.id] = infoWindow;
       
-      // 마커 클릭 시 정보창 열기
-      final marker = _markers[place.id];
-      if (marker != null) {
-        // 정보창 클릭 이벤트 기능은 추후 구현
-        // 현재는 정보창 객체만 생성
-        debugPrint('정보창 이벤트 설정 완료: ${place.name}');
-      }
+      debugPrint('정보창 생성 완료: ${place.name}');
     } catch (e) {
       debugPrint('Error adding info window: $e');
     }
@@ -480,6 +565,14 @@ class _NaverMapWebState extends State<NaverMapWeb> {
       // 선택된 마커로 중심 이동
       _naverMap?.setCenter(LatLng(newPlace.latitude, newPlace.longitude) as JSAny);
     }
+  }
+
+  /// 모든 이벤트 리스너 제거
+  void _clearAllEventListeners() {
+    for (final placeId in _markerEventListeners.keys.toList()) {
+      _removeMarkerEventListener(placeId);
+    }
+    _markerEventListeners.clear();
   }
 
   /// 모든 마커 제거
@@ -524,6 +617,34 @@ class _NaverMapWebState extends State<NaverMapWeb> {
     } catch (e) {
       debugPrint('Error fitting bounds: $e');
     }
+  }
+
+  /// 특정 장소의 정보창 열기
+  void openInfoWindow(String placeId) {
+    final infoWindow = _infoWindows[placeId];
+    final marker = _markers[placeId];
+    
+    if (infoWindow != null && marker != null && _naverMap != null) {
+      infoWindow.open(_naverMap!, marker.asJSAny);
+      debugPrint('정보창 열기: $placeId');
+    }
+  }
+
+  /// 특정 장소의 정보창 닫기
+  void closeInfoWindow(String placeId) {
+    final infoWindow = _infoWindows[placeId];
+    if (infoWindow != null) {
+      infoWindow.close();
+      debugPrint('정보창 닫기: $placeId');
+    }
+  }
+
+  /// 모든 정보창 닫기
+  void closeAllInfoWindows() {
+    for (final infoWindow in _infoWindows.values) {
+      infoWindow.close();
+    }
+    debugPrint('모든 정보창 닫기');
   }
 
   @override
