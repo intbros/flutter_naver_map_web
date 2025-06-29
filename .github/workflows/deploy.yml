@@ -46,14 +46,14 @@ jobs:
       - name: Configure API Key
         run: |
           cd example/assets/config
-          sed -i 's/YOUR_NAVER_MAP_CLIENT_ID_HERE/${{ secrets.NAVER_MAP_CLIENT_ID }}/g' app_config.json
+          sed -i 's/YOUR_NAVER_MAP_CLIENT_ID_HERE/${{ secrets.NAVER_MAP_CLIENT_ID }}/g' app_config.prod.json
         env:
           NAVER_MAP_CLIENT_ID: ${{ secrets.NAVER_MAP_CLIENT_ID }}
           
       - name: Build Flutter Web
         run: |
           cd example
-          flutter build web --release --base-href /flutter_naver_map_web/
+          flutter build web --release --dart-define=ENVIRONMENT=prod --base-href /flutter_naver_map_web/
           
       - name: Copy build to docs
         run: |
