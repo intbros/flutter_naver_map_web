@@ -53,7 +53,7 @@ jobs:
       - name: Build Flutter Web
         run: |
           cd example
-          flutter build web --release --web-renderer canvaskit --base-href /flutter_naver_map_web/
+          flutter build web --release --base-href /flutter_naver_map_web/
           
       - name: Copy build to docs
         run: |
