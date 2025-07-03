@@ -46,7 +46,7 @@ jobs:
       - name: Configure API Key
         run: |
           cd example/assets/config
-          sed -i 's/YOUR_NAVER_MAP_CLIENT_ID_HERE/${{ secrets.NAVER_MAP_CLIENT_ID }}/g' app_config.prod.json
+          sed -i 's/YOUR_NAVER_MAP_CLIENT_ID_HERE/${{ secrets.NAVER_MAP_CLIENT_ID }}/g' app_config.json
         env:
           NAVER_MAP_CLIENT_ID: ${{ secrets.NAVER_MAP_CLIENT_ID }}
           
