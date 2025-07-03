@@ -13,11 +13,12 @@ NAVER 지도 API v3는 JavaScript 형태의 NAVER 지도 플랫폼으로, 네이
 실제 작동하는 예제를 확인하고 싶으시다면 라이브 데모를 방문해보세요:
 
 **[🚀 라이브 데모 보기](https://intbros.github.io/flutter_naver_map_web/)**
-**https://intbros.github.io/flutter_naver_map_web/
+https://intbros.github.io/flutter_naver_map_web/
 
-<img src="snapshots/snapshots_basic_map.png" alt="Flutter Naver Map Web 데모" width="800" />
+<img src="snapshots/snapshots_basic_map.png" width="500" alt="Flutter Naver Map Web 스크린샷">
 
 데모에서는 다음과 같은 기능들을 직접 체험할 수 있습니다:
+
 - 기본 지도 표시
 - 마커 클릭 이벤트
 - 여러 마커 관리
