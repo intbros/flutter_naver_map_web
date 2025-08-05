@@ -18,10 +18,10 @@ class LatLng {
 
 extension LatLngExtension on LatLng {
   @JS('lat')
-  external double get lat;
+  external double lat();
 
   @JS('lng')
-  external double get lng;
+  external double lng();
 
   @JS('toString')
   external String toMapString();

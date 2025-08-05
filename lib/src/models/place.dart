@@ -7,7 +7,7 @@ class Place {
   final String? description;
   final String? category;
   final String? iconUrl;
-  
+  final bool? draggable;
   const Place({
     required this.id,
     required this.name,
@@ -16,6 +16,7 @@ class Place {
     this.description,
     this.category,
     this.iconUrl,
+    this.draggable,
   });
   
   /// JSON으로부터 Place 객체 생성
@@ -28,6 +29,7 @@ class Place {
       description: json['description'],
       category: json['category'],
       iconUrl: json['iconUrl'],
+      draggable: json['draggable'],
     );
   }
   
@@ -41,6 +43,7 @@ class Place {
       'description': description,
       'category': category,
       'iconUrl': iconUrl,
+      'draggable': draggable,
     };
   }
 }
