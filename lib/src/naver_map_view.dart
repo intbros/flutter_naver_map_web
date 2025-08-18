@@ -36,7 +36,16 @@ class NaverMapWeb extends StatefulWidget {
   
   /// 마커 클릭 콜백
   final Function(Place)? onMarkerClick;
-  
+
+  /// 마커 드래그 활성화 여부
+  final bool enableMarkerDrag;
+
+  /// 마커 드래그 시작 콜백
+  final Function(Place, LatLng)? onMarkerDragStart;
+
+  /// 마커 드래그 종료 콜백
+  final Function(Place, LatLng)? onMarkerDragEnd;
+
   /// 선택된 장소 ID
   final String? selectedPlaceId;
   
@@ -57,6 +66,9 @@ class NaverMapWeb extends StatefulWidget {
     this.onMapReady,
     this.places = const [],
     this.onMarkerClick,
+    this.enableMarkerDrag = false,
+    this.onMarkerDragStart,
+    this.onMarkerDragEnd,
     this.selectedPlaceId,
     this.markerSize,
     this.selectedMarkerSize,
@@ -359,11 +371,14 @@ class _NaverMapWebState extends State<NaverMapWeb> {
         'position': LatLng(place.latitude, place.longitude) as JSAny,
         'map': _naverMap as JSAny,
         'title': place.name,
-        'icon': place.iconUrl != null ? {
-          'url': place.iconUrl,
-          'size': {'width': size.width, 'height': size.height},
-          'scaledSize': {'width': size.width, 'height': size.height},
-        } : null,
+        'draggable': place.draggable ?? false,
+        'icon': place.iconUrl != null
+            ? {
+                'url': place.iconUrl,
+                'size': {'width': size.width, 'height': size.height},
+                'scaledSize': {'width': size.width, 'height': size.height},
+              }
+            : null,
       }.jsify() as JSAny;
       
       // 마커 생성
@@ -377,7 +392,19 @@ class _NaverMapWebState extends State<NaverMapWeb> {
       
       // 마커 클릭 이벤트 추가
       _addMarkerClickEvent(place.id, marker);
-      
+
+      if (place.draggable ?? false) {
+        // 마커 드래그 시작 이벤트 추가
+        if (widget.onMarkerDragStart != null) {
+          _addMarkerDragStartEvent(place.id, marker);
+        }
+
+        // 마커 드래그 종료 이벤트 추가
+        if (widget.onMarkerDragEnd != null) {
+          _addMarkerDragEndEvent(place.id, marker);
+        }
+      }
+
       debugPrint('마커 추가 완료: ${place.name}');
     } catch (e) {
       debugPrint('Error adding marker: $e');
@@ -413,6 +440,63 @@ class _NaverMapWebState extends State<NaverMapWeb> {
       debugPrint('마커 클릭 이벤트 등록 완료: $placeId');
     } catch (e) {
       debugPrint('Error adding marker click event: $e');
+    }
+  }
+
+  /// 마커 드래그 시작 이벤트 추가
+  void _addMarkerDragStartEvent(String placeId, Marker marker) {
+    try {
+      // JavaScript에서 호출할 수 있는 콜백 함수 생성
+      final dragStartListener = ((JSAny event) {
+        debugPrint('마커 드래그 시작됨: $placeId');
+
+        // 해당하는 Place 객체 찾기
+        final place = _places[placeId];
+        if (place != null && widget.onMarkerDragStart != null) {
+          debugPrint('마커 드래그 시작됨: ${marker.getPosition() as JSAny}');
+          final markerPosition = marker.getPosition();
+
+          widget.onMarkerDragStart!(place, LatLng(markerPosition.lat(), markerPosition.lng()));
+        }
+      }).toJS;
+
+      // 네이버 지도 API의 이벤트 리스너 추가
+      _addEventListenerToMarker(marker, 'dragstart', dragStartListener);
+
+      // 리스너 저장 (나중에 해제하기 위해)
+      _markerEventListeners[placeId] = dragStartListener;
+
+      debugPrint('마커 드래그 시작 이벤트 등록 완료: $placeId');
+    } catch (e) {
+      debugPrint('Error adding marker drag start event: $e');
+    }
+  }
+
+  /// 마커 드래그 종료 이벤트 추가
+  void _addMarkerDragEndEvent(String placeId, Marker marker) {
+    try {
+      // JavaScript에서 호출할 수 있는 콜백 함수 생성
+      final dragEndListener = ((JSAny event) {
+        debugPrint('마커 드래그 종료됨: $placeId');
+
+        // 해당하는 Place 객체 찾기
+        final place = _places[placeId];
+        if (place != null && widget.onMarkerDragEnd != null) {
+          final markerPosition = marker.getPosition();
+
+          widget.onMarkerDragEnd!(place, LatLng(markerPosition.lat(), markerPosition.lng()));
+        }
+      }).toJS;
+
+      // 네이버 지도 API의 이벤트 리스너 추가
+      _addEventListenerToMarker(marker, 'dragend', dragEndListener);
+
+      // 리스너 저장 (나중에 해제하기 위해)
+      _markerEventListeners[placeId] = dragEndListener;
+
+      debugPrint('마커 드래그 종료 이벤트 등록 완료: $placeId');
+    } catch (e) {
+      debugPrint('Error adding marker drag end event: $e');
     }
   }
 
